@@ -1,3 +1,4 @@
+
 name: GDPSFH IPA Builder
 
 on:
@@ -15,11 +16,6 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
-
-    - name: Set up Xcode
-      uses: maxheld83/setup-xcode@v2
-      with:
-        xcode-version: '12.5'
 
     - name: Download IPA from GDPSFH IPA Maker
       run: |
