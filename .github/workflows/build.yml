@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       ipa_maker_url:
-        description: "URL to the GDPSFH IPA Maker (e.g., https://ipa.fhgdps.com/ipa-maker?url=greyaedangd.ps.fhgdps.com&name=Grey%20and%20aedans%20GDPS)"
+        description: "URL to the GDPSFH IPA Maker"
         required: true
         type: string
 
@@ -17,15 +17,41 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Download IPA from GDPSFH IPA Maker
+    - name: Set up Node.js and Puppeteer
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
       run: |
-        echo "Downloading the IPA from the provided URL: ${{ inputs.ipa_maker_url }}"
-        wget ${{ inputs.ipa_maker_url }} -O gdpsfh-ipa.zip
-        unzip gdpsfh-ipa.zip -d gdpsfh-ipa
-        cd gdpsfh-ipa
+        npm install puppeteer
+
+    - name: Download IPA using Puppeteer
+      run: |
+        const puppeteer = require('puppeteer');
+        const fs = require('fs');
+        const downloadPath = 'gdpsfh-ipa.zip';
+
+        (async () => {
+          const browser = await puppeteer.launch({ headless: true });
+          const page = await browser.newPage();
+          await page.goto('${{ inputs.ipa_maker_url }}');
+
+          // Wait for the page to load and ensure the file is available to download
+          await page.waitForSelector('a#download-link');  // Assuming there's a download link with id "download-link"
+          const downloadUrl = await page.$eval('a#download-link', el => el.href);
+
+          // Use Puppeteer's built-in download method or handle download via the `downloadUrl`
+          const viewSource = await page.goto(downloadUrl);
+          const buffer = await viewSource.buffer();
+          fs.writeFileSync(downloadPath, buffer);
+
+          await browser.close();
+        })();
+      shell: node
 
     - name: Upload the IPA Artifact
       uses: actions/upload-artifact@v4
       with:
         name: GDPSFH-IPA
-        path: gdpsfh-ipa/*.ipa
+        path: gdpsfh-ipa.zip
