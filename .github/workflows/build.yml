@@ -1,0 +1,35 @@
+name: GDPSFH IPA Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      ipa_maker_url:
+        description: "URL to the GDPSFH IPA Maker (e.g., https://ipa.fhgdps.com/ipa-maker?url=greyaedangd.ps.fhgdps.com&name=Grey%20and%20aedans%20GDPS)"
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Xcode
+      uses: maxheld83/setup-xcode@v2
+      with:
+        xcode-version: '12.5'
+
+    - name: Download IPA from GDPSFH IPA Maker
+      run: |
+        echo "Downloading the IPA from the provided URL: ${{ inputs.ipa_maker_url }}"
+        wget ${{ inputs.ipa_maker_url }} -O gdpsfh-ipa.zip
+        unzip gdpsfh-ipa.zip -d gdpsfh-ipa
+        cd gdpsfh-ipa
+
+    - name: Upload the IPA Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: GDPSFH-IPA
+        path: gdpsfh-ipa/*.ipa
