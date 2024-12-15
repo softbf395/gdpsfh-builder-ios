@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest  # macOS runner for compatibility with ipa.fhgdps.com
+    runs-on: macos-latest # macOS runner for compatibility with ipa.fhgdps.com
 
     steps:
     - name: Checkout Repository
@@ -27,13 +27,13 @@ jobs:
     - name: Run IPA Maker Script
       run: |
         echo "Running IPA Maker..."
-        IPA_MAKER_URL="${{ inputs.ipa_maker_url }}" node index.js
+        node index.js
 
     - name: Upload IPA File
       uses: actions/upload-artifact@v4.3.4
       with:
         name: ipa-file
-        path: gdpsfh-ipa.ipa  # Upload the .ipa file directly
+        path: gdpsfh-ipa.ipa
 
     - name: Cleanup
       run: |
