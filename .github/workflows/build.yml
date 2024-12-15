@@ -1,57 +1,42 @@
-
 name: GDPSFH IPA Builder
 
 on:
   workflow_dispatch:
     inputs:
       ipa_maker_url:
-        description: "URL to the GDPSFH IPA Maker"
+        description: "URL to the IPA Maker"
         required: true
-        type: string
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-latest  # macOS runner for compatibility with ipa.fhgdps.com
 
     steps:
-    - name: Checkout Code
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Set up Node.js and Puppeteer
+    - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '16'
+        node-version: '18.x'
 
-    - name: Install dependencies
+    - name: Install Dependencies
       run: |
         npm install puppeteer
 
-    - name: Download IPA using Puppeteer
+    - name: Run IPA Maker Script
       run: |
-        const puppeteer = require('puppeteer');
-        const fs = require('fs');
-        const downloadPath = 'gdpsfh-ipa.zip';
+        echo "Running IPA Maker..."
+        IPA_MAKER_URL="${{ inputs.ipa_maker_url }}" node index.js
 
-        (async () => {
-          const browser = await puppeteer.launch({ headless: true });
-          const page = await browser.newPage();
-          await page.goto('${{ inputs.ipa_maker_url }}');
-
-          // Wait for the page to load and ensure the file is available to download
-          await page.waitForSelector('a#download-link');  // Assuming there's a download link with id "download-link"
-          const downloadUrl = await page.$eval('a#download-link', el => el.href);
-
-          // Use Puppeteer's built-in download method or handle download via the `downloadUrl`
-          const viewSource = await page.goto(downloadUrl);
-          const buffer = await viewSource.buffer();
-          fs.writeFileSync(downloadPath, buffer);
-
-          await browser.close();
-        })();
-      shell: node
-
-    - name: Upload the IPA Artifact
-      uses: actions/upload-artifact@v4
+    - name: Upload IPA File
+      uses: actions/upload-artifact@v4.3.4
       with:
-        name: GDPSFH-IPA
-        path: gdpsfh-ipa.zip
+        name: ipa-file
+        path: gdpsfh-ipa.ipa  # Upload the .ipa file directly
+
+    - name: Cleanup
+      run: |
+        echo "Cleaning up files..."
+        rm -rf node_modules
+        rm gdpsfh-ipa.ipa
